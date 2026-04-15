@@ -1,0 +1,76 @@
+name: 🔐 CyberSec News Bot
+
+on:
+  # ── Automatic schedule ──────────────────────────────────────────────────────
+  # Runs every 6 hours. Edit the cron string to change frequency.
+  # Format:  minute  hour  day  month  weekday
+  # Every 6h:  '0 */6 * * *'
+  # Every 4h:  '0 */4 * * *'
+  # Twice/day: '0 8,20 * * *'  (8 AM and 8 PM UTC)
+  schedule:
+    - cron: '0 */6 * * *'
+
+  # ── Manual trigger from GitHub Actions UI ──────────────────────────────────
+  workflow_dispatch:
+    inputs:
+      max_posts:
+        description: 'Max articles to post this run (default 3)'
+        required: false
+        default: '3'
+
+# Needed so the workflow can commit seen_articles.json back to the repo
+permissions:
+  contents: write
+
+jobs:
+  post-news:
+    name: Fetch & Post CyberSec News
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Get the code (including seen_articles.json if it exists) ──────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Set up Python ─────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── 3. Install dependencies ──────────────────────────────────────────────
+      - name: Install dependencies
+        run: pip install feedparser requests
+
+      # ── 4. Run the bot ───────────────────────────────────────────────────────
+      - name: Run CyberSec News Bot
+        env:
+          # Discord: paste your webhook URL here as a GitHub Secret
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+          # Telegram: bot token from @BotFather + group chat ID
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+
+          # WhatsApp via Green API (free tier)
+          GREENAPI_INSTANCE_ID: ${{ secrets.GREENAPI_INSTANCE_ID }}
+          GREENAPI_API_TOKEN:   ${{ secrets.GREENAPI_API_TOKEN }}
+          WHATSAPP_CHAT_ID:     ${{ secrets.WHATSAPP_CHAT_ID }}
+
+          # Override max posts for manual runs
+          MAX_POSTS_PER_RUN: ${{ github.event.inputs.max_posts || '3' }}
+        run: python cybersec_bot.py
+
+      # ── 5. Commit seen_articles.json back so we don't repost ────────────────
+      - name: Persist seen articles to repo
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add seen_articles.json
+          # Only commit if the file actually changed
+          git diff --staged --quiet \
+            || git commit -m "chore: update seen articles [skip ci]"
+          git push
