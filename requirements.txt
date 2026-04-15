@@ -5,10 +5,3 @@ requests==2.32.3
 pytest==8.3.4
 pytest-mock==3.14.0
 
-webhook : https://discord.com/api/webhooks/1494054372722741390/-jEZ895aP1EsQYSgRbkPbh5JCjUASa4gTIJ81Fk6J4-QCvKFFfkwjK6ZS1euah_Kc78x
-Boot2RootBanditAgent1_bot : 8422257184:AAHKzFztxTCpEshJAvF8sTg55xS42eCsFBk
-
-
-whatapp idInstance : 7107589242
-apiTokenInstance: feb0a53bb3b74b79a886bf5db56f3b5de75477e0cc82443fb7
-Name : Instance 7107589242
